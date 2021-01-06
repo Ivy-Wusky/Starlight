@@ -39,10 +39,12 @@ uint64_t readU64(uint64_t *p, uint64_t offset)
     return res;
 }
 
+/*
 uint32_t getGeyserPos(uint64_t pos, uint64_t first) {
     if (pos == first || pos == 0) return 65;
     return (pos - first - 0x6B0) / 0x900 + 65;
 }
+*/
 
 void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWriter)
 {
@@ -88,9 +90,12 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
             view->pushMenu(new menu::MushViewMenu());
         };
 
+        menu::SimpleMenuEntry* menuTitleDisplayEntry = new menu::SimpleMenuEntry();
         menu::SimpleMenuEntry* sceneDisplayEntry = new menu::SimpleMenuEntry();
         menu::SimpleMenuEntry* modeDisplayEntry = new menu::SimpleMenuEntry();
         menu::SimpleMenuEntry* heapNameEntry = new menu::SimpleMenuEntry();
+        menuTitleDisplayEntry->mRenderCallback = [](){
+            return "Starleon"; };
         sceneDisplayEntry->mRenderCallback = [](){ 
             return "Current Scene Name: " + std::string(Lp::Utl::getCurSceneName()); };
         modeDisplayEntry->mRenderCallback = [](){
@@ -102,6 +107,7 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
         mushEntry->mSelectedCallback = loadMushCallback;
         mushEntry->mRenderCallback = []() { return "Mush Viewer"; };
 
+        m->mEntries.push_back(menuTitleDisplayEntry);
         m->mEntries.push_back(sceneDisplayEntry);
         m->mEntries.push_back(modeDisplayEntry);
         m->mEntries.push_back(heapNameEntry);

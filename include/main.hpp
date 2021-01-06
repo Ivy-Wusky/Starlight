@@ -75,7 +75,7 @@ char const* modeToText(Modes);
 
 uint32_t readU32(uint32_t *p, uint32_t offset);
 uint64_t readU64(uint64_t *p, uint64_t offset);
-uint32_t getGeyserPos(uint64_t pos, uint64_t first);
+// uint32_t getGeyserPos(uint64_t pos, uint64_t first);
 
 bool isSceneLoaded(char *name);
 // bool isTriggered(Lp::Sys::Ctrl *controller, unsigned long id);
