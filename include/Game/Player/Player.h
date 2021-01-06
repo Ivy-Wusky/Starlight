@@ -33,6 +33,7 @@ namespace Game {
         void change_DemoPlaceAnim(Game::Player::ResultAnim, int);
         void replaceTeamColor(sead::Color4f const&);
         void calcDraw_In4thCalc();
+        bool isCreateMantle();
 
         u64 mMinimapTarget;
         u32 Player_x350;

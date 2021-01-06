@@ -11,12 +11,14 @@ namespace starlight {
     // Utils
     Cmn::StaticMem* Collector::mStaticMemInstance;
     Cmn::GfxSetting* Collector::mGfxSettingInstance;
+    Cmn::MemIdentityChecker* Collector::mMemIdentityCheckerInstance;
 
     // Player Information
     Game::Player* Collector::mControlledPlayer;
     Cmn::PlayerInfo* Collector::mControlledPlayerInfo;
     Cmn::PlayerCtrl* Collector::mPlayerCtrlInstance;
     Cmn::PlayerInfoAry* Collector::mPlayerInfoAry;
+    // Cmn::IPlayerCustomInfo* Collector::mPlayerCustomInfo;
 
     // Mush
     Cmn::MushDataHolder* Collector::mMushDataHolder;
@@ -36,6 +38,7 @@ namespace starlight {
         mPlayerMgrInstance = Game::PlayerMgr::sInstance;
         mPlayerCtrlInstance = Cmn::PlayerCtrl::sInstance;
         mMushDataHolder = Cmn::MushDataHolder::sInstance;
+        mMemIdentityCheckerInstance = Cmn::MemIdentityChecker::sInstance;
 
         if(mStaticMemInstance){
             mPlayerInfoAry = mStaticMemInstance->mPlayerInfoAry;

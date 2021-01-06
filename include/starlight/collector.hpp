@@ -11,6 +11,8 @@
 #include "Cmn/Mush/MushDataHolder.h"
 #include "Cmn/Mush/MushWeaponInfo.h"
 #include "Cmn/Mush/MushMapInfo.h"
+#include "Cmn/IPlayerCustomInfo.h"
+#include "Cmn/MemIdentityChecker.h"
 #include "Lp/Utl.h"
 #include "sead/heap.h"
 
@@ -28,12 +30,14 @@ namespace starlight
         // Utils
         static Cmn::StaticMem* mStaticMemInstance;
         static Cmn::GfxSetting* mGfxSettingInstance;
+        static Cmn::MemIdentityChecker* mMemIdentityCheckerInstance;
 
         // Player Information
         static Game::Player* mControlledPlayer;
         static Cmn::PlayerInfo* mControlledPlayerInfo;
         static Cmn::PlayerCtrl* mPlayerCtrlInstance;
         static Cmn::PlayerInfoAry* mPlayerInfoAry;
+        // static Cmn::IPlayerCustomInfo* mPlayerCustomInfo;
 
         // Mush
         static Cmn::MushDataHolder* mMushDataHolder;

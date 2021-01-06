@@ -16,11 +16,39 @@ static View* mView;
 static int mode;
 static bool showMenu;
 static int nnSocketInit = false;
+const char* validMemIdentityCheck = "03dbbed2e04e31b0e9081c08a65ee4fb";
+static bool validateMemIdentityCheck = true;
+
+uint32_t readU32(uint32_t *p, uint32_t offset)
+{
+    uint32_t res;
+    asm volatile("LDR %[result], [%[base], %[offset]]"
+                 : [ result ] "=r"(res)
+                 : [ base ] "r"(p), [ offset ] "r"(offset)
+                 :);
+    return res;
+}
+
+uint64_t readU64(uint64_t *p, uint64_t offset)
+{
+    uint32_t res;
+    asm volatile("LDR %[result], [%[base], %[offset]]"
+                 : [ result ] "=r"(res)
+                 : [ base ] "r"(p), [ offset ] "r"(offset)
+                 :);
+    return res;
+}
+
+uint32_t getGeyserPos(uint64_t pos, uint64_t first) {
+    if (pos == first || pos == 0) return 65;
+    return (pos - first - 0x6B0) / 0x900 + 65;
+}
 
 void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWriter)
 {
     mDrawContext = drawContext;
     mTextWriter = textWriter;
+    Cmn::MemIdentityChecker* memIdentityChecker = Collector::mMemIdentityCheckerInstance;
 
     mTextWriter->mColor = sead::Color4f::cWhite;
 
@@ -32,12 +60,16 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
     if(mStarlightHeap != NULL)
         Collector::mHeapMgr->setCurrentHeap_(mStarlightHeap);
 
-    //if(Collector::mController.isPressed(Controller::Buttons::Minus1))
-    //    showMenu = !showMenu;
+    if (memIdentityChecker != NULL && validateMemIdentityCheck == true) {
+        memcpy(memIdentityChecker->mHash.mCharPtr, validMemIdentityCheck, 32);
+    }
+
+    if(Collector::mController.isPressed(Controller::Buttons::Minus1))
+        showMenu = !showMenu;
 
     static bool init = false;
     if(!init){
-        TcpLogger::Log("renderEntrypoint init\n");
+        TcpLogger::Log("renderEntrypoint INIT.\n");
 
         sead::SafeStringBase<char> loggingThreadName;
         loggingThreadName.mCharPtr = "starlight::LoggingThread";
@@ -47,7 +79,7 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
 
         mLoggingThread = new sead::DelegateThread(loggingThreadName, &loggingDelegate, mStarlightHeap, 4, sead::MessageQueue::BlockType::DEFAULT, 0x7FFFFFFF, 0x10000, 20);
         mLoggingThread->start();
-        TcpLogger::Log("Logging thread started\n");
+        TcpLogger::Log("Logging thread started.\n");
 
         mView = new View();
         menu::SimpleMenu* m = new menu::SimpleMenu();
@@ -57,25 +89,41 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
         };
 
         menu::SimpleMenuEntry* sceneDisplayEntry = new menu::SimpleMenuEntry();
+        menu::SimpleMenuEntry* modeDisplayEntry = new menu::SimpleMenuEntry();
+        menu::SimpleMenuEntry* heapNameEntry = new menu::SimpleMenuEntry();
         sceneDisplayEntry->mRenderCallback = [](){ 
-            return "Current scene name: " + std::string(Lp::Utl::getCurSceneName()); };
-
+            return "Current Scene Name: " + std::string(Lp::Utl::getCurSceneName()); };
+        modeDisplayEntry->mRenderCallback = [](){
+            return "Current Mode: " + std::string(modeToText((Modes)mode)); };
+        heapNameEntry->mRenderCallback = [](){
+            return "Current Heap Name: " + std::string(Collector::mHeapMgr->getCurrentHeap()->mName.mCharPtr); };
+        
         menu::SimpleMenuEntry* mushEntry = new menu::SimpleMenuEntry();
         mushEntry->mSelectedCallback = loadMushCallback;
-        mushEntry->mRenderCallback = []() {return "Mush viewer";};
+        mushEntry->mRenderCallback = []() { return "Mush Viewer"; };
 
         m->mEntries.push_back(sceneDisplayEntry);
+        m->mEntries.push_back(modeDisplayEntry);
+        m->mEntries.push_back(heapNameEntry);
         m->mEntries.push_back(mushEntry);
 
         mView->pushMenu(m);
         
         init = true;
 
-        TcpLogger::Log("Starlight init complete.\n");
+        TcpLogger::Log("Starlight INIT complete.\n");
     }
+
+    /*
+    Application* app;
+    textWriter->printf("FPS: %f\n", app->_28->calcFps());
+
+    aal::Debugger* dgber = new aal::Debugger();
+    dgber->drawInformation(drawContext, textWriter);
+    */
     
-    textWriter->printf("Current heap name: %s\n", Collector::mHeapMgr->getCurrentHeap()->mName.mCharPtr);
-    textWriter->printf("Current heap free space: 0x%x\n", Collector::mHeapMgr->getCurrentHeap()->getFreeSize());
+    // textWriter->printf("Current Heap Name: %s\n", Collector::mHeapMgr->getCurrentHeap()->mName.mCharPtr);
+    textWriter->printf("Current Heap Free Space: 0x%x\n", Collector::mHeapMgr->getCurrentHeap()->getFreeSize());
 
     mView->update();
     mView->render(mTextWriter);
@@ -86,17 +134,19 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
         textWriter->setScaleFromFontHeight(20);
         sead::TextWriter::setupGraphics(drawContext); // re-setup context
 
+        /*
         textWriter->printf("Welcome to Starlight!\n");
         textWriter->printf("This is a demonstration of C/C++ code running in the context of a Switch game!\n");
         textWriter->printf("Credit to shibboleet, Khangaroo, Thog, Retr0id, and the libnx maintainers!\n");
+        */
         
-        textWriter->printf("Current scene name: %s\n", Lp::Utl::getCurSceneName());
+        // textWriter->printf("Current Scene Name: %s\n", Lp::Utl::getCurSceneName());
 
         if(Collector::mController.isPressed(Controller::Buttons::RStick))
             mode++;
         if(mode > Modes::END)
             mode = 0;
-        textWriter->printf("Current mode: %s\n", modeToText((Modes)mode));
+        // textWriter->printf("Current Mode: %s\n", modeToText((Modes)mode));
 
         Cmn::StaticMem *staticMem = Collector::mStaticMemInstance;
         if(staticMem != NULL)
@@ -143,9 +193,29 @@ void allocHeap() {
     }
 }
 
+void hooks_init() {
+    isCreateMantleHook();
+    memIdentityCheckHook(NULL);
+}
+
 nn::os::Tick nnSocketInitHook(){
     nnSocketInit++;
     return nn::os::GetSystemTick(); // expected result of replaced call
+}
+
+bool isCreateMantleHook() {
+    return true;
+}
+
+void memIdentityCheckHook(Cmn::MemIdentityChecker *memIdentityChecker) {
+    if (memIdentityChecker != NULL) {
+        if (validateMemIdentityCheck == true) {
+            memcpy(memIdentityChecker->mHash.mCharPtr, validMemIdentityCheck, 32);
+        }
+        else {
+            memIdentityChecker->calcHash();
+        }
+    }
 }
 
 void loggerMain(sead::Thread* thread, s64){
@@ -165,6 +235,7 @@ void loggerMain(sead::Thread* thread, s64){
         Lp::Utl::sleepCurThreadMilliSec(1);
     }
 }
+
 void drawBackground(){
     sead::Vector3<float> p1; // top left
     p1.mX = -1.0;
@@ -197,26 +268,106 @@ void drawBackground(){
 void handleStaticMem(Cmn::StaticMem *staticMem){
     sead::SafeStringBase<char> *stageName = &staticMem->mMapFileName[0];
     if(stageName->mCharPtr != NULL){
-        mTextWriter->printf("Loaded stage: %s\n", stageName->mCharPtr);
+        mTextWriter->printf("Loaded Stage: %s\n", stageName->mCharPtr);
     }
     
     Cmn::PlayerInfoAry *playerInfoAry = staticMem->mPlayerInfoAry;
     if(playerInfoAry != NULL){
-        mTextWriter->printf("PlayerInfoAry ptr: 0x%x\n", playerInfoAry);
+        mTextWriter->printf("PlayerInfoAry PTR: 0x%x\n", playerInfoAry);
     }
 }
 
 void handlePlayerMgr(Game::PlayerMgr* playerMgr){
     Game::Player* player = playerMgr->getControlledPerformer();
+    if (player != NULL) {
+        if (mode == Modes::TEAM_COLOR_PICKER) {
+            static long choice = 0;
+
+            if (Collector::mController.isPressed(Controller::Buttons::UpDpad))
+                choice++;
+            if (Collector::mController.isPressed(Controller::Buttons::DownDpad))
+                choice--;
+            
+            if (choice < 0)
+                choice = 0;
+
+            if (choice > 9)
+                choice = 0;
+
+            switch (choice)
+            {
+                case 0:
+                    mTextWriter->printf("Current Team Color: Default\n");
+                    break;
+                case 1:
+                    player->replaceTeamColor(sead::Color4f::cBlack);
+                    mTextWriter->printf("Current Team Color: Black\n");
+                    break;
+                case 2:
+                    player->replaceTeamColor(sead::Color4f::cBlue);
+                    mTextWriter->printf("Current Team Color: Blue\n");
+                    break;
+                case 3:
+                    player->replaceTeamColor(sead::Color4f::cCyan);
+                    mTextWriter->printf("Current Team Color: Cyan\n");
+                    break;
+                case 4:
+                    player->replaceTeamColor(sead::Color4f::cGray);
+                    mTextWriter->printf("Current Team Color: Gray\n");
+                    break;
+                case 5:
+                    player->replaceTeamColor(sead::Color4f::cGreen);
+                    mTextWriter->printf("Current Team Color: Green\n");
+                    break;
+                case 6:
+                    player->replaceTeamColor(sead::Color4f::cMagenta);
+                    mTextWriter->printf("Current Team Color: Magenta\n");
+                    break;
+                case 7:
+                    player->replaceTeamColor(sead::Color4f::cRed);
+                    mTextWriter->printf("Current Team Color: Red\n");
+                    break;
+                case 8:
+                    player->replaceTeamColor(sead::Color4f::cWhite);
+                    mTextWriter->printf("Current Team Color: White\n");
+                    break;
+                case 9:
+                    player->replaceTeamColor(sead::Color4f::cYellow);
+                    mTextWriter->printf("Current Team Color: Yellow\n");
+                    break;
+                default:
+                    mTextWriter->printf("Current Team Color: Default\n");
+                    break;
+            }
+        }
+    }
 
     Cmn::PlayerInfo* info = player->mPlayerInfo;
     if(info != NULL){
-        mTextWriter->printf("Controlled player team: %x\n", info->mTeam);
-        mTextWriter->printf(u"Controlled player name: %s\n", info->mPlayerName);
+        // mTextWriter->printf("Controlled Player Team: %x\n", info->mTeam);
+        mTextWriter->printf(u"Controlled Player Name: %s\n", info->mPlayerName);
         if(info->mPlayerIndex == 0){
-            info->setPlayerName(u"Shadów");
+            info->setPlayerName(u"Ivy ");
         }
-    }     
+    }
+
+    if (playerMgr != NULL && player != NULL) {
+        if (mode == Modes::TEAM_SWITCHER) {
+            if (info->mTeam == Cmn::Def::Team::Alpha) {
+                mTextWriter->printf("Controlled Player Team: Alpha\n");
+            }
+            else if (info->mTeam == Cmn::Def::Team::Bravo) {
+                mTextWriter->printf("Controlled Player Team: Bravo\n");
+            }
+
+            /*
+            if (Collector::mController.isPressed(Controller::Buttons::UpDpad)) {
+                player->mPlayerInfo->mTeam = bool(player->mPlayerInfo->mTeam) ^ 1;
+                player->mTeam = bool(readU64(uint64_t(player), 0x328)) ^ 1;
+            }
+            */
+        }
+    }
 
     Game::PlayerMotion *playerMotion = player->mPlayerMotion;
 
@@ -230,19 +381,14 @@ void handlePlayerMgr(Game::PlayerMgr* playerMgr){
             
         if(scroll < 0)
             scroll = 0;
-
-        if(Collector::mController.isPressed(Controller::Buttons::LStick))
-            playerMotion->startEventAnim((Game::PlayerMotion::AnimID) scroll, 0, 1.0);
-
+        
+        playerMotion->startEventAnim((Game::PlayerMotion::AnimID) scroll, 0, 1.0);
         mTextWriter->printf("Event ID: 0x%x\n", scroll);
-
-        if(Collector::mController.isPressed(Controller::Buttons::LStick))
-            playerMotion->startEventAnim((Game::PlayerMotion::AnimID) scroll, 0, 1.0);
 
     } else if(mode == Modes::PLAYER_SWITCHER){
 
         signed int currentPlayer = playerMgr->mCurrentPlayerIndex;
-        mTextWriter->printf("Current player: %i\n", currentPlayer);
+        mTextWriter->printf("Current Player: %i\n", currentPlayer);
 
         if(Collector::mController.isPressed(Controller::Buttons::UpDpad))
             currentPlayer++;
@@ -257,6 +403,18 @@ void handlePlayerMgr(Game::PlayerMgr* playerMgr){
         playerMgr->mCurrentPlayerIndex = currentPlayer;
         playerMgr->onChangeControlledPlayer();
     }
+
+    // playerMgr->updateAllControlledPlayer_(0);
+
+    // Cmn::IPlayerCustomInfo* playerCustomInfo = Collector::mPlayerCustomInfo;
+    Cmn::MemIdentityChecker* memIdentityChecker = Collector::mMemIdentityCheckerInstance;
+    if (memIdentityChecker != NULL /* && playerCustomInfo != NULL */) {
+        if (mode == Modes::HOOK_STUFF) {
+            // mTextWriter->printf("isCreateMantle: %s", playerCustomInfo->isCreateMantle() ? "true" : "false");
+            mTextWriter->printf("isCreateMantle: %s", player->isCreateMantle() ? "true" : "false");
+            mTextWriter->printf("mHash: %s", memIdentityChecker->mHash.mCharPtr);
+        }
+    }
 }
 
 void handlePlayerControl(Cmn::PlayerCtrl* playerCtrl){
@@ -264,12 +422,12 @@ void handlePlayerControl(Cmn::PlayerCtrl* playerCtrl){
     input.record(); // grab input data
 
     if(mode == Modes::INPUT_VIEWER){
-        mTextWriter->printf("Left stick | x: %f | y: %f\n", input.leftStick.mX, input.leftStick.mY);
-        mTextWriter->printf("Right stick | x: %f | y: %f\n", input.rightStick.mX, input.rightStick.mY);
-        mTextWriter->printf("Angle vel | x: %f | y: %f | z: %f\n", input.angleVel.mX, input.angleVel.mY, input.angleVel.mZ);
-        mTextWriter->printf("Posture x | x: %f | y: %f | z: %f\n", input.postureX.mX, input.postureX.mY, input.postureX.mZ);
-        mTextWriter->printf("Posture y | x: %f | y: %f | z: %f\n", input.postureY.mX, input.postureY.mY, input.postureY.mZ);
-        mTextWriter->printf("Posture z | x: %f | y: %f | z: %f\n", input.postureZ.mX, input.postureZ.mY, input.postureZ.mZ);
+        mTextWriter->printf("Left Stick | X: %f | Y: %f\n", input.leftStick.mX, input.leftStick.mY);
+        mTextWriter->printf("Right Stick | X: %f | Y: %f\n", input.rightStick.mX, input.rightStick.mY);
+        mTextWriter->printf("Angle Vel | X: %f | Y: %f | Z: %f\n", input.angleVel.mX, input.angleVel.mY, input.angleVel.mZ);
+        mTextWriter->printf("Posture X | X: %f | Y: %f | Z: %f\n", input.postureX.mX, input.postureX.mY, input.postureX.mZ);
+        mTextWriter->printf("Posture Y | X: %f | Y: %f | Z: %f\n", input.postureY.mX, input.postureY.mY, input.postureY.mZ);
+        mTextWriter->printf("Posture Z | X: %f | Y: %f | Z: %f\n", input.postureZ.mX, input.postureZ.mY, input.postureZ.mZ);
     }
 
     static bool entered = false;
@@ -318,6 +476,7 @@ void handleMushDataHolder(Cmn::MushDataHolder* mushDataHolder){
                 data->mRank = 0;
                 data->mSpecialCost = 0;
                 data->mLockType = Cmn::WeaponData::LockType::None;
+                // data->mDoubleType = Cmn::WeaponData::DoubleType::Mirror;
             }
         }
 
@@ -350,20 +509,42 @@ void handleMainMgr(Game::MainMgr* mainMgr) {
     }
 }
 
+/*
+bool isTriggered(Lp::Sys::Ctrl *controller, unsigned long id){
+    bool buttonHeld = controller->data & id;
+    return buttonHeld & !(controller->data & lastInputs & id);
+}
+*/
+
+bool isSceneLoaded(char *name) {
+    if (Lp::Utl::getCurSceneName() == name) {
+        return true;
+    }
+    else if (Lp::Utl::getCurSceneName() != name) {
+        return false;
+    }
+}
+
 char const* modeToText(Modes mode){
     switch(mode){
         case Modes::NONE:
             return "None";
+        case Modes::TEAM_COLOR_PICKER:
+            return "Team Color Picker";
         case Modes::FLY:
             return "Fly";
         case Modes::EVENT_VIEWER:
-            return "Event viewer";
+            return "Event Viewer";
         case Modes::INPUT_VIEWER:
-            return "Gyro/stick input viewer";
+            return "Gyro/Stick Input Viewer";
         case Modes::PLAYER_SWITCHER:
-            return "Player switcher";
+            return "Player Switcher";
+        case Modes::TEAM_SWITCHER:
+            return "Team Switcher";
         case Modes::PAINT_ALL:
-            return "Paint all";
+            return "Paint All";
+        case Modes::HOOK_STUFF:
+            return "Dev";
         default:
             return "None";
     }

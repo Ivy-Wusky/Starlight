@@ -27,6 +27,7 @@
 #include "Cmn/Def/util.h"
 #include "Cmn/GfxUtl.h"
 #include "Cmn/IPlayerCustomInfo.h"
+#include "Cmn/MemIdentityChecker.h"
 #include "Lp/Utl.h"
 #include "Lp/Sys/ctrl.h"
 #include "Lp/Sys/heapgroup.h"
@@ -40,6 +41,7 @@
 #include "Game/RivalMgr.h"
 #include "MiniGame/gfx.h"
 #include "aal/debugdrawer.h"
+// #include "aal/Debugger.h"
 #include "nn/hid.h"
 #include "ModuleObject.hpp"
 #include "starlight/collector.hpp"
@@ -48,9 +50,10 @@
 #include "starlight/menu/simplemenu.hpp"
 #include "starlight/menu/popmenuentry.hpp"
 #include "starlight/menu/mushmenu.hpp"
+// #include "system/Application.h"
 
 enum Modes {
-    NONE, FLY, EVENT_VIEWER, INPUT_VIEWER,  PLAYER_SWITCHER, PAINT_ALL, END
+    NONE, TEAM_COLOR_PICKER, FLY, EVENT_VIEWER, INPUT_VIEWER,  PLAYER_SWITCHER, TEAM_SWITCHER, PAINT_ALL, HOOK_STUFF, END
 };
 
 void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWriter);
@@ -70,6 +73,13 @@ void handleGfxSetting(Cmn::GfxSetting*);
 
 char const* modeToText(Modes);
 
+uint32_t readU32(uint32_t *p, uint32_t offset);
+uint64_t readU64(uint64_t *p, uint64_t offset);
+uint32_t getGeyserPos(uint64_t pos, uint64_t first);
 
+bool isSceneLoaded(char *name);
+// bool isTriggered(Lp::Sys::Ctrl *controller, unsigned long id);
 
-char const* modeToText(Modes);
+void hooks_init();
+bool isCreateMantleHook();
+void memIdentityCheckHook(Cmn::MemIdentityChecker *memIdentityChecker);

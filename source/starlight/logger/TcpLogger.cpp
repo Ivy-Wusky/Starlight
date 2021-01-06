@@ -59,7 +59,7 @@ namespace starlight {
 
         g_loggerInit = true;
         
-        TcpLogger::Log("socket initialized!\n");
+        TcpLogger::Log("Socket initialized!\n");
         TcpLogger::ClearQueue();
     }
 
