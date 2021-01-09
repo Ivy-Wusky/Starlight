@@ -107,11 +107,11 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
         mushEntry->mSelectedCallback = loadMushCallback;
         mushEntry->mRenderCallback = []() { return "Mush Viewer"; };
 
-        m->mEntries.push_back(menuTitleDisplayEntry);
-        m->mEntries.push_back(sceneDisplayEntry);
-        m->mEntries.push_back(modeDisplayEntry);
-        m->mEntries.push_back(heapNameEntry);
         m->mEntries.push_back(mushEntry);
+        m->mEntries.push_back(heapNameEntry);
+        m->mEntries.push_back(modeDisplayEntry);
+        m->mEntries.push_back(sceneDisplayEntry);
+        m->mEntries.push_back(menuTitleDisplayEntry);
 
         mView->pushMenu(m);
         
