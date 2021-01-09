@@ -135,7 +135,7 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
     mView->render(mTextWriter);
 
     if(showMenu){
-        drawBackground();
+        // drawBackground();
         
         textWriter->setScaleFromFontHeight(20);
         sead::TextWriter::setupGraphics(drawContext); // re-setup context

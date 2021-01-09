@@ -12,12 +12,12 @@ enl::NinInetMatchingManagerPlatformImpl::internetInitialize+BC BL nnSocketInitHo
 
 00E57E7C NOP // enable cape dynamics in Game::Player
 00E56460 BL isCreateMantleHook // go to hook at the beginning of the func
-00090628 B isCreateMantleHook // hooking at all ocurrences of isCreateMantle()
-00E90F20 B isCreateMantleHook // ditto from line above
-0103F068 B isCreateMantleHook // ""
-0103F0A4 B isCreateMantleHook // ""
-012E337C B isCreateMantleHook // ""
-012E339C B isCreateMantleHook // ""
+// 00090628 B isCreateMantleHook // hooking at all ocurrences of isCreateMantle()
+// 00E90F20 B isCreateMantleHook // ditto from line above
+// 0103F068 B isCreateMantleHook // ""
+// 0103F0A4 B isCreateMantleHook // ""
+// 012E337C B isCreateMantleHook // ""
+// 012E339C B isCreateMantleHook // ""
 
 01230AC0 BL memIdentityCheckHook // go to hook to validate
 0129222C B memIdentityCheckHook // ditto from line above
