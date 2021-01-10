@@ -90,18 +90,18 @@ void renderEntrypoint(agl::DrawContext *drawContext, sead::TextWriter *textWrite
             view->pushMenu(new menu::MushViewMenu());
         };
 
-        menu::SimpleMenuEntry* menuTitleDisplayEntry = new menu::SimpleMenuEntry();
-        menu::SimpleMenuEntry* sceneDisplayEntry = new menu::SimpleMenuEntry();
-        menu::SimpleMenuEntry* modeDisplayEntry = new menu::SimpleMenuEntry();
         menu::SimpleMenuEntry* heapNameEntry = new menu::SimpleMenuEntry();
-        menuTitleDisplayEntry->mRenderCallback = [](){
-            return "Starleon"; };
-        sceneDisplayEntry->mRenderCallback = [](){ 
-            return "Current Scene Name: " + std::string(Lp::Utl::getCurSceneName()); };
-        modeDisplayEntry->mRenderCallback = [](){
-            return "Current Mode: " + std::string(modeToText((Modes)mode)); };
+        menu::SimpleMenuEntry* modeDisplayEntry = new menu::SimpleMenuEntry();
+        menu::SimpleMenuEntry* sceneDisplayEntry = new menu::SimpleMenuEntry();
+        menu::SimpleMenuEntry* menuTitleDisplayEntry = new menu::SimpleMenuEntry();
         heapNameEntry->mRenderCallback = [](){
             return "Current Heap Name: " + std::string(Collector::mHeapMgr->getCurrentHeap()->mName.mCharPtr); };
+        modeDisplayEntry->mRenderCallback = [](){
+            return "Current Mode: " + std::string(modeToText((Modes)mode)); };
+        sceneDisplayEntry->mRenderCallback = [](){ 
+            return "Current Scene Name: " + std::string(Lp::Utl::getCurSceneName()); };
+        menuTitleDisplayEntry->mRenderCallback = [](){
+            return "Starleon"; };
         
         menu::SimpleMenuEntry* mushEntry = new menu::SimpleMenuEntry();
         mushEntry->mSelectedCallback = loadMushCallback;
@@ -557,5 +557,7 @@ char const* modeToText(Modes mode){
 }
 
 int main(int arg, char **argv){
-
+    if (svcGetSystemTick() > 0) {
+        return 0;
+    }
 }

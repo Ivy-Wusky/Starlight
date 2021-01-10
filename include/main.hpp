@@ -39,6 +39,7 @@
 #include "Game/MainMgr.h"
 #include "Game/PaintUtl.h"
 #include "Game/RivalMgr.h"
+#include "Game/PlayerCmnCamera.h"
 #include "MiniGame/gfx.h"
 #include "aal/debugdrawer.h"
 // #include "aal/Debugger.h"
