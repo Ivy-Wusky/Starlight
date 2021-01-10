@@ -78,7 +78,7 @@ namespace Cmn {
         void listenPropertyEvent(__int64 const*); // Lp::Sys::HioPropertyEvent const*
         void listenNodeEvent(__int64 const*); // Lp::Sys::HioNodeEvent const*
         void updateParam();
-        bool checkDerivedRuntimeTypeInfo( __int64 const*)const; // sead::RuntimeTypeInfo::Interface const*
+        bool checkDerivedRuntimeTypeInfo(__int64 const*)const; // sead::RuntimeTypeInfo::Interface const*
         __int64 *getRuntimeTypeInfo(); // idk what this returns
         void onCalc();
         void onActive();
