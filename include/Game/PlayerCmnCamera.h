@@ -8,9 +8,9 @@ namespace Game {
         public:
         PlayerCmnCamera();
         ~PlayerCmnCamera();
-        void onCalc();
-        void genMessage(__int64 *); // Lp::Sys::HioContext *
-        bool checkDerivedRuntimeTypeInfo(__int64 const*)const; // sead::RuntimeTypeInfo::Interface const*
-        __int64 *getRuntimeTypeInfo(); // idk what this returns
+        void onCalc() override;
+        void genMessage(__int64 *) override; // Lp::Sys::HioContext *
+        bool checkDerivedRuntimeTypeInfo(__int64 const*)const override; // sead::RuntimeTypeInfo::Interface const*
+        __int64 *getRuntimeTypeInfo() override; // idk what this returns
     };
 };
